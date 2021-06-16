@@ -1,4 +1,4 @@
-"""In-game time calculator."""
+"""Calculator for in-game time and durations."""
 
 from functools import total_ordering
 from typing import Union
@@ -19,7 +19,34 @@ DAYS_PER_YEAR = HOURS_PER_YEAR / HOURS_PER_DAY
 
 @total_ordering
 class Duration:
-    """A span of in-game time."""
+    """A span of in-game time.
+
+    Example use case: Calculating the required orbital periods for a CommNet
+    relay constellation deployment.
+
+    - Goal: 6 evenly-spaced relay satellites at an 8,000 Mm circular orbit
+      around Kerbol.
+
+    - Approximate orbital period for target orbit: 201d 4h 28m 20s (grabbed
+      from an ingame maneuver)
+
+    - Approach: Bring satellites into an orbit with periapsis at 8,000 Mm and
+      an orbital period that is 7/6 times the orbital period of target orbit.
+      Every time the deployment craft completes 1 orbit, it has lagged behind
+      the circular orbit by 1/6 of the orbital period.
+
+    - Each time the craft reaches periapsis, detach a satellite and have it
+      burn retrograde until the target orbital period is reached.
+
+    To calculate the orbital period of the deployment craft:
+
+    >>> relay_orbital_period = Duration(
+    ...     days=201, hours=4, minutes=28, seconds=20,
+    ... )
+    >>> offset_orbital_period = relay_orbital_period * 7 / 6
+    >>> offset_orbital_period
+    235d 2h 13m 3s
+    """
 
     _seconds: float
 
