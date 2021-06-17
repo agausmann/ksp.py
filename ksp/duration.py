@@ -8,13 +8,14 @@ Number = Union[float, int]
 SECONDS_PER_MINUTE = 60.0
 MINUTES_PER_HOUR = 60.0
 HOURS_PER_DAY = 6.0
-HOURS_PER_YEAR = 2556.5
+# This is the length of the full orbit of Kerbin, but it appears that
+# the "year" in timestamps is exactly 426 days.
+# HOURS_PER_YEAR = 2556.5
+DAYS_PER_YEAR = 426.0
 
 SECONDS_PER_HOUR = SECONDS_PER_MINUTE * MINUTES_PER_HOUR
 SECONDS_PER_DAY = SECONDS_PER_HOUR * HOURS_PER_DAY
-SECONDS_PER_YEAR = SECONDS_PER_HOUR * HOURS_PER_YEAR
-
-DAYS_PER_YEAR = HOURS_PER_YEAR / HOURS_PER_DAY
+SECONDS_PER_YEAR = SECONDS_PER_DAY * DAYS_PER_YEAR
 
 
 @total_ordering
@@ -139,10 +140,20 @@ class Duration:
 
     @property
     def timestamp_days(self) -> int:
-        """The number of whole days contained by this duration."""
-        return int(self.as_days)
+        """The number of whole days since the last whole year.
 
-    # TODO how to handle years in timestamp?
+        This does not return the total length of the duration in days;
+        the returned number always represents a fractional portion of a day
+        (i.e., it is less than 426 days).
+        """
+        return int(self.as_days % DAYS_PER_YEAR)
+    
+    @property
+    def timestamp_years(self) -> int:
+        """The number of whole years contained in this duration."""
+        return int(self.as_years)
+
+
 
     def __add__(self, rhs: 'Duration') -> 'Duration':
         """The sum of the lengths of the two durations."""
@@ -172,6 +183,14 @@ class Duration:
         return self._seconds < rhs._seconds
 
     def __repr__(self):
+        if self.timestamp_years > 0:
+            return '{}y {}d {}h {}m {}s'.format(
+                self.timestamp_years,
+                self.timestamp_days,
+                self.timestamp_hours,
+                self.timestamp_minutes,
+                self.timestamp_seconds,
+            )
         if self.timestamp_days > 0:
             return '{}d {}h {}m {}s'.format(
                 self.timestamp_days,
